@@ -1,5 +1,6 @@
 // ====== EDIT ME ======
 const NAME = "SWADHA";
+const STRETCH_WIDE = 1.35, STRETCH_TALL = 1.15; // make title/name text wider (1 = normal)
 const DATE = "13 OCT";                    // repeated in the background
 const TITLE_WIDE = ["HAPPY BIRTHDAY"];   // landscape / desktop
 const TITLE_TALL = ["HAPPY", "BIRTHDAY"]; // portrait / mobile
@@ -23,6 +24,7 @@ const GROUP_META = [
   {f: 'photos/g6.jpg', fx: .45, fy: .68, z: 2.4},
   {f: 'photos/g7.jpg', fx: .20, fy: .39, z: 2.2},
   {f: 'photos/g8.jpg', fx: .30, fy: .50, z: 2.2},
+  {f: 'photos/g9.jpg', fx: .17, fy: .36, z: 2.4},
 ];
 // Optional: put a file called music.mp3 in the repo; it plays on first tap/click.
 // =====================
@@ -157,11 +159,12 @@ function draw() {
   leds(H * 0.97, H * 0.015, tall ? 4 : 5, tall ? 40 : 50, t, 3);
 
   // text (big)
+  STRETCH = tall ? STRETCH_TALL : STRETCH_WIDE;
   const lines = tall ? TITLE_TALL : TITLE_WIDE;
-  const tsz = fitSize(lines, W * 0.94, tall ? H * 0.085 : H * 0.17);
+  const tsz = fitSize(lines, W * 0.97, tall ? H * 0.085 : H * 0.17);
   const ty = H * (tall ? 0.145 : 0.2);
   lines.forEach((ln, i) => bounceText(ln, cx, ty + i * tsz * 1.12, tsz, t, 4));
-  bounceText(NAME, cx, H * (tall ? 0.885 : 0.895), fitSize([NAME], W * 0.8, tall ? H * 0.075 : H * 0.12), t, 2.5);
+  bounceText(NAME, cx, H * (tall ? 0.885 : 0.895), fitSize([NAME], W * 0.9, tall ? H * 0.075 : H * 0.12), t, 2.5);
 
   // auto sparkle bursts
   if (millis() > nextBurst) { burst(random(W * 0.1, W * 0.9), random(H * 0.25, H * 0.8)); nextBurst = millis() + 2200; }
@@ -200,6 +203,13 @@ function draw() {
     pop();
   }
   drawingContext.globalAlpha = 1;
+
+  // music hint until audio starts (browsers need a tap first)
+  if (song && song.paused) {
+    drawingContext.globalAlpha = 0.6 + 0.4 * sin(t * 4); fill(CREAM);
+    textAlign(RIGHT, CENTER); textSize(min(18, W * 0.035)); text('♪ TAP FOR MUSIC', W - 14, H * 0.935);
+    drawingContext.globalAlpha = 1;
+  }
 }
 
 // ---------- photo viewer: polaroid "cake" with candles ----------
@@ -235,15 +245,15 @@ function easeOutBack(k) { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * pow(k
 
 // ---------- background birth date, tiled and drifting ----------
 function dateWall(t, W, H) {
-  const sz = max(W, H) * 0.08, gx = sz * 4, gy = sz * 1.7, R = sqrt(W * W + H * H) / 2 + gx;
+  const sz = max(W, H) * 0.16, gx = sz * 3.6, gy = sz * 1.25, R = sqrt(W * W + H * H) / 2 + gx * 0.5;
   push(); translate(W / 2, H / 2); rotate(-0.2);
-  textSize(sz); textAlign(CENTER, CENTER);
+  textSize(sz); textAlign(CENTER, CENTER); strokeJoin(ROUND);
   for (let j = -ceil(R / gy); j <= ceil(R / gy); j++) {
-    const dir = j % 2 ? -1 : 1, off = ((t * 25 * dir) % gx) + (j % 2 ? gx / 2 : 0);
-    drawingContext.globalAlpha = 0.11; fill(PAL[(j + 12) % 6]);
+    const dir = j % 2 ? -1 : 1, off = ((t * 8 * dir) % gx) + (j % 2 ? gx / 2 : 0);   // slow drift
+    drawingContext.globalAlpha = 0.16; fill(PAL[(j + 12) % 6]); stroke(PAL[(j + 12) % 6]); strokeWeight(sz * 0.05); // bold
     for (let i = -ceil(R / gx) - 1; i <= ceil(R / gx) + 1; i++) text(DATE, i * gx + off, j * gy);
   }
-  drawingContext.globalAlpha = 1; pop();
+  drawingContext.globalAlpha = 1; noStroke(); pop();
 }
 
 // ---------- helpers ----------
@@ -271,21 +281,24 @@ function banner(y0, sag, k, n, t) {
   }
 }
 
+let STRETCH = 1;
 function fitSize(lines, maxW, maxSz) {
   textSize(100);
-  const w = max(lines.map(l => textWidth(l)));
+  const w = max(lines.map(l => textWidth(l))) * STRETCH;
   return min(maxSz, 100 * maxW / w);
 }
 
 function bounceText(s, cx, y, sz, t, spd) {
   textSize(sz); textAlign(LEFT, CENTER);
-  let x = cx - textWidth(s) / 2;
+  let x = cx - textWidth(s) * STRETCH / 2;
   const cols = ['#e8478f', '#f5a30f', '#1fb5ad'];
   for (const ch of s) {
     const yy = y + sin(t * spd + x * 0.02) * sz * 0.1;
-    for (let i = 3; i >= 1; i--) { fill(cols[i - 1]); text(ch, x + i * sz * 0.035, yy + i * sz * 0.035); }
-    fill(CREAM); text(ch, x, yy);
-    x += textWidth(ch);
+    push(); translate(x, yy); scale(STRETCH, 1);
+    for (let i = 3; i >= 1; i--) { fill(cols[i - 1]); text(ch, i * sz * 0.035, i * sz * 0.035); }
+    fill(CREAM); text(ch, 0, 0);
+    pop();
+    x += textWidth(ch) * STRETCH;
   }
 }
 
