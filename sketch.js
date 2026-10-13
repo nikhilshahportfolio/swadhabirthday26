@@ -1,5 +1,6 @@
 // ====== EDIT ME ======
 const NAME = "SWADHA";
+const DATE = "13 OCT";                    // repeated in the background
 const TITLE_WIDE = ["HAPPY BIRTHDAY"];   // landscape / desktop
 const TITLE_TALL = ["HAPPY", "BIRTHDAY"]; // portrait / mobile
 // Center arch: solo photos. (fx, fy = face position 0-1, z = zoom)
@@ -100,6 +101,8 @@ function draw() {
   for (let i = 0; i < 24; i++) { fill(i % 2 ? '#142349' : '#1c2f63'); arc(0, 0, max(W, H) * 2.4, max(W, H) * 2.4, i * TWO_PI / 24, (i + 1) * TWO_PI / 24, PIE); }
   pop();
 
+  dateWall(t, W, H);
+
   // pulsing rings
   noFill();
   for (let i = 0; i < 7; i++) {
@@ -118,7 +121,7 @@ function draw() {
 
   // arch size
   let aw, ah;
-  if (tall) { aw = W * 0.6; ah = min(aw * 1.3, H * 0.4); } else { ah = H * 0.52; aw = ah * 0.76; }
+  if (tall) { aw = W * 0.6; ah = min(aw * 1.3, H * 0.4); } else { ah = H * 0.48; aw = ah * 0.76; }
   const d = m * (tall ? 0.15 : 0.13);
 
   // orbiting group-photo circles (tappable)
@@ -155,10 +158,10 @@ function draw() {
 
   // text (big)
   const lines = tall ? TITLE_TALL : TITLE_WIDE;
-  const tsz = fitSize(lines, W * 0.88, tall ? H * 0.085 : H * 0.12);
-  const ty = H * (tall ? 0.145 : 0.17);
+  const tsz = fitSize(lines, W * 0.94, tall ? H * 0.085 : H * 0.17);
+  const ty = H * (tall ? 0.145 : 0.2);
   lines.forEach((ln, i) => bounceText(ln, cx, ty + i * tsz * 1.12, tsz, t, 4));
-  bounceText(NAME, cx, H * (tall ? 0.885 : 0.905), fitSize([NAME], W * 0.8, tall ? H * 0.075 : H * 0.085), t, 2.5);
+  bounceText(NAME, cx, H * (tall ? 0.885 : 0.895), fitSize([NAME], W * 0.8, tall ? H * 0.075 : H * 0.12), t, 2.5);
 
   // auto sparkle bursts
   if (millis() > nextBurst) { burst(random(W * 0.1, W * 0.9), random(H * 0.25, H * 0.8)); nextBurst = millis() + 2200; }
@@ -211,8 +214,7 @@ function drawLightbox(i, k, t) {
   fill(0, 90); rect(-fw / 2 + 8, -fh / 2 + 10, fw, fh, 6);
   fill(CREAM); rect(-fw / 2, -fh / 2, fw, fh, 6);
   image(im, -pw / 2, -fh / 2 + pad, pw, ph);
-  fill('#e8472b'); textAlign(CENTER, CENTER); 
-  textSize(min(40, fw * 0.1)); text('HAPPY BIRTHDAY!', 0, fh / 2 - bot / 2);
+  fill('#e8472b'); textAlign(CENTER, CENTER); textSize(min(22, fw * 0.06)); text('HAPPY BIRTHDAY!', 0, fh / 2 - bot / 2);
   for (let j = 0; j < 5; j++) candle(-fw / 2 + fw * (j + 0.5) / 5, -fh / 2, ch, t, j * 1.7, PAL[j % 6]);
   drawingContext.globalAlpha = 1;
   pop();
@@ -230,6 +232,19 @@ function candle(x, y, h, t, seed, col) {
   fill('#fff6d6'); ellipse(x + sx, fy + h * 0.04, h * 0.09, h * 0.2 * fl);
 }
 function easeOutBack(k) { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * pow(k - 1, 3) + c1 * pow(k - 1, 2); }
+
+// ---------- background birth date, tiled and drifting ----------
+function dateWall(t, W, H) {
+  const sz = max(W, H) * 0.08, gx = sz * 4, gy = sz * 1.7, R = sqrt(W * W + H * H) / 2 + gx;
+  push(); translate(W / 2, H / 2); rotate(-0.2);
+  textSize(sz); textAlign(CENTER, CENTER);
+  for (let j = -ceil(R / gy); j <= ceil(R / gy); j++) {
+    const dir = j % 2 ? -1 : 1, off = ((t * 25 * dir) % gx) + (j % 2 ? gx / 2 : 0);
+    drawingContext.globalAlpha = 0.11; fill(PAL[(j + 12) % 6]);
+    for (let i = -ceil(R / gx) - 1; i <= ceil(R / gx) + 1; i++) text(DATE, i * gx + off, j * gy);
+  }
+  drawingContext.globalAlpha = 1; pop();
+}
 
 // ---------- helpers ----------
 function swagY(u, y0, sag, k) { return y0 + sag * abs(sin(u * k * PI)); }
